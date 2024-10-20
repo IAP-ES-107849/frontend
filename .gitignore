@@ -1,0 +1,13 @@
+#ignore node_modules
+node_modules
+venv
+.env
+
+#ignore .env
+.env
+
+#ignore sw.js
+dev-dist/sw.js
+
+#src/static
+static
