@@ -7,7 +7,7 @@ export const CleanLayout: React.FC = ({ }) => {
     return (
         <div>
             <header className="px-4 lg:px-6 h-14 flex items-center">
-                <a href="/" className="flex items-center justify-center">
+                <a href="/home" className="flex items-center justify-center">
                     <span className="sr-only">Acme Inc</span>
                     <svg
                         className="h-6 w-6"
