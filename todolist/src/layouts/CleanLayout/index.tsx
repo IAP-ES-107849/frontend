@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 
-export const CleanLayout: React.FC = ({ }) => {
+export const CleanLayout: React.FC = () => {
     return (
         <div>
             <header className="px-4 lg:px-6 h-14 flex items-center">

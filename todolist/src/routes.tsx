@@ -1,4 +1,4 @@
-import { lazy, Suspense, ReactNode, useEffect, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { CleanLayout } from './layouts/CleanLayout';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
