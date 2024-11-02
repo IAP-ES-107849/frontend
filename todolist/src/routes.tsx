@@ -52,11 +52,11 @@ export const routes = [
             {
                 path: '/home',
                 element: (
-                    <ProtectedRoute>
+                    // <ProtectedRoute>
                         <Suspense fallback={<div>Loading...</div>}>
                             <HomePage />
                         </Suspense>
-                    </ProtectedRoute>
+                    // </ProtectedRoute>
                 )
             }
         ]
