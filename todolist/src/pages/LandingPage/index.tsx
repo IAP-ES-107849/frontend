@@ -1,7 +1,35 @@
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useUserStore } from "@/stores/useUserStore";
+import { UserService } from "@/services/Client/UserService";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react"
 
 export default function LandingPage() {
+    const { token, setUserInformation } = useUserStore();
+
+    console.log("Token acessado na LandingPage:", token);
+
+    const fetchUser = async () => {
+        const response = await UserService.getUser();
+        return response.data;
+    };
+    const { data } = useQuery({
+        queryKey: ["user"],
+        queryFn: fetchUser,
+        enabled: !!token,
+    });
+
+    useEffect(() => {
+        console.log("Data do usuário:", data);
+        if (data && token) {
+            setUserInformation(data);
+        }
+    }, [data, setUserInformation, token]);
+
     return (
         <div className="flex flex-col h-screen-5/6 justify-center items-center">
             <main className="flex-1 flex justify-center items-center">
@@ -17,10 +45,13 @@ export default function LandingPage() {
                                 </p>
                             </div>
                             <div className="space-x-4">
-                                <Button className="inline-flex items-center justify-center">
-                                    Start Here
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
+                                <Link to={import.meta.env.VITE_LOGIN_SIGN_UP}>
+
+                                    <Button className="inline-flex items-center justify-center">
+                                        Get Started
+                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </Link>
                                 {/* <Button variant="outline">Learn More</Button> */}
                             </div>
                         </div>
