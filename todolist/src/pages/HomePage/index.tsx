@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -9,73 +10,230 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TaskService } from '@/services/Client/TaskService'
+import { toast } from "@/hooks/use-toast"
+import { useUserStore } from '@/stores/useUserStore'
 
 type Task = {
-  id: string
-  title: string
-  description: string
-  status: 'Todo' | 'In Progress' | 'Done'
-  deadline: string
-  priority: 'Low' | 'Medium' | 'High'
-}
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: number;
+  deadline: Date | null;
+  created_at: string;
+};
 
-const initialTasks: Task[] = []
+type NewTask = {
+  title: string;
+  description: string;
+  priority: number;
+  deadline: Date | null;
+  status: string; // Added status field
+};
 
 export default function TodoList() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const queryClient = useQueryClient();
+  const { token, setUserInformation } = useUserStore();
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [newTask, setNewTask] = useState<NewTask>({
+    title: "",
+    description: "",
+    priority: 0,
+    deadline: null,
+    status: "Todo" // Added initial status
+  });
+  const [updatedTask, setUpdatedTask] = useState<Task>({
+    id: "",
+    title: "",
+    description: "",
+    status: "",
+    priority: 1,
+    deadline: null,
+    created_at: "",
+  });
 
-  const addTask = (task: Omit<Task, 'id'>) => {
-    const newTask = { ...task, id: Date.now().toString() }
-    setTasks([...tasks, newTask])
-    setIsModalOpen(false)
+  const [sortBy, setSortBy] = useState<"deadline" | "createdAt">("deadline");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+
+  const { data: tasks = [], refetch: refetchTasks } = useQuery<Task[]>({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const response = await TaskService.getTasks();
+      console.log(response.data);
+      return response.data;
+    },
+    enabled: !!token,
+  });
+
+  const addTask = async (task: NewTask) => {
+    console.log(task)
+    try {
+      await TaskService.createTask(
+        task.title,
+        task.description,
+        task.priority,
+        task.deadline ? new Date(task.deadline).toISOString() : '',
+        task.status, // Added status to createTask
+        token
+      )
+      refetchTasks()
+      setIsAddTaskModalOpen(false)
+      toast({
+        title: "Success",
+        description: "Task added successfully.",
+      })
+    } catch (error) {
+      console.error('Failed to add task:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add task. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const updateTask = (updatedTask: Task) => {
-    setTasks(tasks.map(task => task.id === updatedTask.id ? updatedTask : task))
-    setEditingTask(null)
+  const updateTask = async (task: Task) => {
+    try {
+      await TaskService.updateTask(
+        task.id,
+        task.title,
+        task.description,
+        task.priority,
+        task.deadline ? new Date(task.deadline).toISOString() : '',
+        token
+      )
+      refetchTasks()
+      setSelectedTask(null)
+      toast({
+        title: "Success",
+        description: "Task updated successfully.",
+      })
+    } catch (error) {
+      console.error('Failed to update task:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const onDragEnd = (result: any) => {
+  const deleteTask = async (id: string) => {
+    try {
+      await TaskService.deleteTask(id)
+      refetchTasks()
+      toast({
+        title: "Success",
+        description: "Task deleted successfully.",
+      })
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const onDragEnd = async (result: any) => {
     if (!result.destination) return
 
-    const newTasks = Array.from(tasks)
-    const [reorderedTask] = newTasks.splice(result.source.index, 1)
-    reorderedTask.status = result.destination.droppableId as Task['status']
-    newTasks.splice(result.destination.index, 0, reorderedTask)
-
-    setTasks(newTasks)
+    const updatedTask = tasks.find(task => task.id.toString() === result.draggableId)
+    if (updatedTask) {
+      updatedTask.status = result.destination.droppableId
+      console.log(updatedTask)
+      await updateTask(updatedTask)
+    }
   }
+  const handleTaskSubmit = async (task: Task | NewTask) => {
+    if ('id' in task) {
+      await updateTask(task);
+    } else {
+      await addTask(task);
+    }
+  };
+
+  const sortedAndFilteredTasks = tasks
+  .filter(task => priorityFilter === 'all' || task.priority.toString() === priorityFilter)
+  .sort((a, b) => {
+    const aDeadline = a.deadline ? new Date(a.deadline).getTime() : 0;
+    const bDeadline = b.deadline ? new Date(b.deadline).getTime() : 0;
+
+    if (sortBy === 'deadline') {
+      return sortOrder === 'asc' ? aDeadline - bDeadline : bDeadline - aDeadline;
+    } else {
+      const aCreatedAt = new Date(a.created_at).getTime();
+      const bCreatedAt = new Date(b.created_at).getTime();
+      return sortOrder === 'asc' ? aCreatedAt - bCreatedAt : bCreatedAt - aCreatedAt;
+    }
+  });
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Todo List</h1>
-      <Button onClick={() => setIsModalOpen(true)}>Add Task</Button>
+      <div className="flex justify-between items-center mb-4">
+        <Button onClick={() => setIsAddTaskModalOpen(true)}>Add Task</Button>
+        <div className="flex gap-2">
+          <Select value={sortBy} onValueChange={(value: "deadline" | "createdAt") => setSortBy(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="deadline">Deadline</SelectItem>
+              <SelectItem value="createdAt">Created At</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort order" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">Ascending</SelectItem>
+              <SelectItem value="desc">Descending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priorities</SelectItem>
+              <SelectItem value="1">Low</SelectItem>
+              <SelectItem value="2">Medium</SelectItem>
+              <SelectItem value="3">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          {(['Todo', 'In Progress', 'Done'] as const).map((status) => (
+          {(['todo', 'In Progress', 'Done'] as const).map((status) => (
             <Droppable key={status} droppableId={status}>
               {(provided) => (
+                console.log(tasks),
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                   className="bg-gray-100 p-4 rounded-lg"
                 >
                   <h2 className="font-semibold mb-2">{status}</h2>
-                  {tasks
+                  {sortedAndFilteredTasks
                     .filter(task => task.status === status)
                     .map((task, index) => (
-                      <Draggable key={task.id} draggableId={task.id} index={index}>
+                      <Draggable key={task.id.toString()} draggableId={task.id.toString()} index={index}>
                         {(provided) => (
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            onClick={() => setEditingTask(task)}
+                            onClick={() => setSelectedTask(task)}
                           >
-                            <TaskCard task={task} />
+                            <TaskCard task={task} onDelete={deleteTask} />
                           </div>
                         )}
                       </Draggable>
@@ -89,24 +247,25 @@ export default function TodoList() {
       </DragDropContext>
 
       <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={addTask}
+        isOpen={isAddTaskModalOpen}
+        onClose={() => setIsAddTaskModalOpen(false)}
+        onSubmit={(task) => addTask(task as NewTask)}
+        initialTask={newTask}
       />
 
-      {editingTask && (
+      {selectedTask && (
         <TaskModal
           isOpen={true}
-          onClose={() => setEditingTask(null)}
-          onSubmit={updateTask}
-          initialTask={editingTask}
+          onClose={() => setSelectedTask(null)}
+          onSubmit={handleTaskSubmit}
+          initialTask={selectedTask}
         />
       )}
     </div>
   )
 }
 
-function TaskCard({ task }: { task: Task }) {
+function TaskCard({ task, onDelete }: { task: Task; onDelete: (id: string) => void }) {
   return (
     <Card className="mb-2">
       <CardHeader>
@@ -114,8 +273,9 @@ function TaskCard({ task }: { task: Task }) {
       </CardHeader>
       <CardContent>
         <p>{task.description}</p>
-        <p>Deadline: {task.deadline}</p>
-        <p>Priority: {task.priority}</p>
+        <p>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'Not set'}</p>
+        <p>Priority: {['Low', 'Medium', 'High'][task.priority - 1]}</p>
+        <Button variant="destructive" onClick={() => onDelete(task.id)}>Delete</Button>
       </CardContent>
     </Card>
   )
@@ -124,18 +284,14 @@ function TaskCard({ task }: { task: Task }) {
 function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (task: Omit<Task, 'id'>) => void
-  initialTask?: Task
+  onSubmit: (task: Task | NewTask) => void
+  initialTask: Task | NewTask
 }) {
-  const [title, setTitle] = useState(initialTask?.title || '')
-  const [description, setDescription] = useState(initialTask?.description || '')
-  const [status, setStatus] = useState<Task['status']>(initialTask?.status || 'Todo')
-  const [deadline, setDeadline] = useState(initialTask?.deadline || '')
-  const [priority, setPriority] = useState<Task['priority']>(initialTask?.priority || 'Medium')
+  const [task, setTask] = useState(initialTask)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({ title, description, status, deadline, priority })
+    onSubmit(task)
     onClose()
   }
 
@@ -143,20 +299,32 @@ function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{initialTask ? 'Edit Task' : 'Add New Task'}</DialogTitle>
+          <DialogTitle>{('id' in initialTask) ? 'Edit Task' : 'Add New Task'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <Input 
+              id="title" 
+              value={task.title} 
+              onChange={(e) => setTask({...task, title: e.target.value})} 
+              required 
+            />
           </div>
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea 
+              id="description" 
+              value={task.description} 
+              onChange={(e) => setTask({...task, description: e.target.value})} 
+            />
           </div>
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(value: Task['status']) => setStatus(value)}>
+            <Select 
+              value={('status' in task) ? task.status : 'Todo'} 
+              onValueChange={(value) => setTask({...task, status: value})}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -169,22 +337,30 @@ function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
           </div>
           <div>
             <Label htmlFor="deadline">Deadline</Label>
-            <Input id="deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+            <Input 
+              id="deadline" 
+              type="date" 
+              value={task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : ''} 
+              onChange={(e) => setTask({...task, deadline: new Date(e.target.value)})} 
+            />
           </div>
           <div>
             <Label htmlFor="priority">Priority</Label>
-            <Select value={priority} onValueChange={(value: Task['priority']) => setPriority(value)}>
+            <Select 
+              value={task.priority.toString()} 
+              onValueChange={(value) => setTask({...task, priority: parseInt(value)})}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="1">Low</SelectItem>
+                <SelectItem value="2">Medium</SelectItem>
+                <SelectItem value="3">High</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit">{initialTask ? 'Update Task' : 'Add Task'}</Button>
+          <Button type="submit">{'id' in initialTask ? 'Update Task' : 'Add Task'}</Button>
         </form>
       </DialogContent>
     </Dialog>

@@ -26,7 +26,7 @@ export default function RedirectPage() {
     onSuccess: (data) => {
       console.log(data.token);
       useUserStore.getState().login(data.token);
-      navigate('/'); // Redireciona após sucesso no login
+      navigate('/home'); // Redireciona após sucesso no login
       // useUserStore.getState().setUserInformation(data.user);
     },
     onError: (error) => {

@@ -35,5 +35,6 @@ def they_should_be_able_to_log_in_successfully_access_their_account_and_the_inte
     wait = WebDriverWait(context.driver, 10)
     wait.until(EC.url_to_be("http://localhost:8080/"))
 
-    welcome_label = context.driver.find_element(By.XPATH, "//*[@id=\"root\"]/div[2]/div/div[1]/div[3]/h1")
+    welcome_label = context.driver.find_element(By.XPATH, "//*[@id=\"root\"]/div[2]/main/div/main/section/div/div/div[1]/h1")
+    
     assert welcome_label is not None

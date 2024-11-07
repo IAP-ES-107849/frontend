@@ -16,3 +16,12 @@ export interface UserResponse {
 //     deadline: Date | null;
 //     createdAt: string;
 //   }
+
+export interface TaskUpdate {
+    title?: string;
+    description?: string;
+    priority?: number;
+    deadline?: string;
+    status?: string;
+
+}

@@ -1,4 +1,4 @@
-Feature: User Login Items
+Feature: User Login
 
     Scenario: Login Page Contains Login Form
         Given a registered user,
