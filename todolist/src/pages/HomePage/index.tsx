@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -34,25 +34,16 @@ type NewTask = {
 };
 
 export default function TodoList() {
-  const queryClient = useQueryClient();
-  const { token, setUserInformation } = useUserStore();
+  // const queryClient = useQueryClient();
+  const { token } = useUserStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
-  const [newTask, setNewTask] = useState<NewTask>({
+  const [newTask] = useState<NewTask>({
     title: "",
     description: "",
     priority: 0,
     deadline: null,
     status: "Todo" // Added initial status
-  });
-  const [updatedTask, setUpdatedTask] = useState<Task>({
-    id: "",
-    title: "",
-    description: "",
-    status: "",
-    priority: 1,
-    deadline: null,
-    created_at: "",
   });
 
   const [sortBy, setSortBy] = useState<"deadline" | "createdAt">("deadline");
@@ -270,7 +261,7 @@ export default function TodoList() {
   )
 }
 
-function TaskCard({ task, onDelete }: { task: Task; onDelete: (id: string) => void }) {
+function TaskCard({ task }: { task: Task; onDelete: (id: string) => void }) {
   return (
     <Card className="mb-2">
       <CardHeader>
