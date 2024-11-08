@@ -1,6 +1,5 @@
 import config from "@/config";
 import { createClient } from "./client";
-import { TaskUpdate } from "@/lib/types";
 
 const client = createClient(config.BASE_URL);
 
