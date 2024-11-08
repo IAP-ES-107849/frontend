@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaskService } from '@/services/Client/TaskService'
 import { toast } from "@/hooks/use-toast"
 import { useUserStore } from '@/stores/useUserStore'
+import { TaskInDb } from '@/lib/types'
 
 type Task = {
   id: string;
@@ -58,7 +59,7 @@ export default function TodoList() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [priorityFilter, setPriorityFilter] = useState("all");
 
-  const { data: tasks = [], refetch: refetchTasks } = useQuery<Task[]>({
+  const { data: tasks = [], refetch: refetchTasks } = useQuery<TaskInDb[]>({
     queryKey: ["tasks"],
     queryFn: async () => {
       const response = await TaskService.getTasks();
@@ -101,8 +102,10 @@ export default function TodoList() {
         task.id,
         task.title,
         task.description,
+        task.status,
         task.priority,
         task.deadline ? new Date(task.deadline).toISOString() : '',
+        task.created_at,
         token
       )
       refetchTasks()
@@ -142,7 +145,7 @@ export default function TodoList() {
   const onDragEnd = async (result: any) => {
     if (!result.destination) return
 
-    const updatedTask = tasks.find(task => task.id.toString() === result.draggableId)
+    const updatedTask = tasks.find(task => task.id === result.draggableId)
     if (updatedTask) {
       updatedTask.status = result.destination.droppableId
       console.log(updatedTask)
@@ -158,19 +161,19 @@ export default function TodoList() {
   };
 
   const sortedAndFilteredTasks = tasks
-  .filter(task => priorityFilter === 'all' || task.priority.toString() === priorityFilter)
-  .sort((a, b) => {
-    const aDeadline = a.deadline ? new Date(a.deadline).getTime() : 0;
-    const bDeadline = b.deadline ? new Date(b.deadline).getTime() : 0;
+    .filter(task => priorityFilter === 'all' || task.priority === priorityFilter)
+    .sort((a, b) => {
+      const aDeadline = a.deadline ? new Date(a.deadline).getTime() : 0;
+      const bDeadline = b.deadline ? new Date(b.deadline).getTime() : 0;
 
-    if (sortBy === 'deadline') {
-      return sortOrder === 'asc' ? aDeadline - bDeadline : bDeadline - aDeadline;
-    } else {
-      const aCreatedAt = new Date(a.created_at).getTime();
-      const bCreatedAt = new Date(b.created_at).getTime();
-      return sortOrder === 'asc' ? aCreatedAt - bCreatedAt : bCreatedAt - aCreatedAt;
-    }
-  });
+      if (sortBy === 'deadline') {
+        return sortOrder === 'asc' ? aDeadline - bDeadline : bDeadline - aDeadline;
+      } else {
+        const aCreatedAt = new Date(a.created_at).getTime();
+        const bCreatedAt = new Date(b.created_at).getTime();
+        return sortOrder === 'asc' ? aCreatedAt - bCreatedAt : bCreatedAt - aCreatedAt;
+      }
+    });
 
   return (
     <div className="container mx-auto p-4">
@@ -259,6 +262,8 @@ export default function TodoList() {
           onClose={() => setSelectedTask(null)}
           onSubmit={handleTaskSubmit}
           initialTask={selectedTask}
+          onDelete={deleteTask} // Pass this as a prop
+
         />
       )}
     </div>
@@ -275,17 +280,18 @@ function TaskCard({ task, onDelete }: { task: Task; onDelete: (id: string) => vo
         <p>{task.description}</p>
         <p>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'Not set'}</p>
         <p>Priority: {['Low', 'Medium', 'High'][task.priority - 1]}</p>
-        <Button variant="destructive" onClick={() => onDelete(task.id)}>Delete</Button>
+        {/* <Button variant="destructive" onClick={() => onDelete(task.id)}>Delete</Button> */}
       </CardContent>
     </Card>
   )
 }
 
-function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
+function TaskModal({ isOpen, onClose, onSubmit, initialTask, onDelete }: {
   isOpen: boolean
   onClose: () => void
   onSubmit: (task: Task | NewTask) => void
   initialTask: Task | NewTask
+  onDelete?: (id: string) => void; // Added this line
 }) {
   const [task, setTask] = useState(initialTask)
 
@@ -304,26 +310,26 @@ function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">Title</Label>
-            <Input 
-              id="title" 
-              value={task.title} 
-              onChange={(e) => setTask({...task, title: e.target.value})} 
-              required 
+            <Input
+              id="title"
+              value={task.title}
+              onChange={(e) => setTask({ ...task, title: e.target.value })}
+              required
             />
           </div>
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              value={task.description} 
-              onChange={(e) => setTask({...task, description: e.target.value})} 
+            <Textarea
+              id="description"
+              value={task.description}
+              onChange={(e) => setTask({ ...task, description: e.target.value })}
             />
           </div>
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select 
-              value={('status' in task) ? task.status : 'Todo'} 
-              onValueChange={(value) => setTask({...task, status: value})}
+            <Select
+              value={('status' in task) ? task.status : 'Todo'}
+              onValueChange={(value) => setTask({ ...task, status: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
@@ -337,18 +343,18 @@ function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
           </div>
           <div>
             <Label htmlFor="deadline">Deadline</Label>
-            <Input 
-              id="deadline" 
-              type="date" 
-              value={task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : ''} 
-              onChange={(e) => setTask({...task, deadline: new Date(e.target.value)})} 
+            <Input
+              id="deadline"
+              type="date"
+              value={task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : ''}
+              onChange={(e) => setTask({ ...task, deadline: new Date(e.target.value) })}
             />
           </div>
           <div>
             <Label htmlFor="priority">Priority</Label>
-            <Select 
-              value={task.priority.toString()} 
-              onValueChange={(value) => setTask({...task, priority: parseInt(value)})}
+            <Select
+              value={task.priority.toString()}
+              onValueChange={(value) => setTask({ ...task, priority: parseInt(value) })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select priority" />
@@ -361,6 +367,18 @@ function TaskModal({ isOpen, onClose, onSubmit, initialTask }: {
             </Select>
           </div>
           <Button type="submit">{'id' in initialTask ? 'Update Task' : 'Add Task'}</Button>
+          {/* Only show the delete button if it's an existing task */}
+          {'id' in task && onDelete && (
+            <Button
+              variant="destructive"
+              onClick={() => {
+                onDelete(task.id); // Call onDelete only if it exists
+                onClose(); // Close the modal after deletion
+              }}
+            >
+              Delete
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>
