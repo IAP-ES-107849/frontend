@@ -35,6 +35,7 @@ function ProtectedRoute({
 const HomePage = lazy(() => import('./pages/HomePage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const RedirectPage = lazy(() => import('./pages/RedirectPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 export const routes = [
     {
@@ -58,7 +59,20 @@ export const routes = [
                         </Suspense>
                     </ProtectedRoute>
                 )
-            }
+            },
+            {
+                path: "/404",
+                element: (
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <NotFound />
+                  </Suspense>
+                ),
+                exact: true,
+              },
+              {
+                path: "*",
+                element: <Navigate to="/404" />,
+              },
         ]
     },
     {
