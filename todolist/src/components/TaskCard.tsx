@@ -69,7 +69,7 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
         <Button
           variant="destructive"
           size="sm"
-          className="w-full"
+          className="w-full bg-gradient-to-r from-red-500 to-red-700 text-white hover:from-red-500 hover:to-red-700"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(task.id);
