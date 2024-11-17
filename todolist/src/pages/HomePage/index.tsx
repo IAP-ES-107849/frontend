@@ -1,19 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaskService } from '@/services/Client/TaskService'
 import { toast } from "@/hooks/use-toast"
 import { useUserStore } from '@/stores/useUserStore'
 import { TaskInDb } from '@/lib/types'
+import { UserService } from '@/services/Client/UserService'
+import { TaskCard } from "@/components/TaskCard";
+import { TaskModal } from "@/components/TaskModal";
 
 type Task = {
   id: string;
@@ -34,17 +35,28 @@ type NewTask = {
 };
 
 export default function TodoList() {
-  // const queryClient = useQueryClient();
-  const { token } = useUserStore();
+  const queryClient = useQueryClient();
+  const { token, setUserInformation } = useUserStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
-  const [newTask] = useState<NewTask>({
+  const [newTask, setNewTask] = useState<NewTask>({
     title: "",
     description: "",
     priority: 0,
     deadline: null,
     status: "Todo" // Added initial status
   });
+
+  const handleOpenAddTaskModal = () => {
+    setNewTask({
+      title: "",
+      description: "",
+      priority: 0,
+      deadline: null,
+      status: "Todo",
+    }); // Reset the fields
+    setIsAddTaskModalOpen(true);
+  };
 
   const [sortBy, setSortBy] = useState<"deadline" | "createdAt">("deadline");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -60,6 +72,24 @@ export default function TodoList() {
     enabled: !!token,
   });
 
+  const fetchUser = async () => {
+    const response = await UserService.getUser();
+    return response.data;
+  };
+
+  const { data: userData } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+    enabled: !!token,
+  });
+
+  useEffect(() => {
+    if (userData) {
+      setUserInformation(userData);
+    }
+  }, [userData, setUserInformation]);
+
+
   const addTask = async (task: NewTask) => {
     console.log(task)
     try {
@@ -69,7 +99,7 @@ export default function TodoList() {
         task.priority,
         task.deadline ? new Date(task.deadline).toISOString() : '',
         task.status, // Added status to createTask
-        token
+        userData.id,
       )
       refetchTasks()
       setIsAddTaskModalOpen(false)
@@ -170,8 +200,8 @@ export default function TodoList() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Todo List</h1>
       <div className="flex justify-between items-center mb-4">
-        <Button onClick={() => setIsAddTaskModalOpen(true)}>Add Task</Button>
-        <div className="flex gap-2">
+      <Button onClick={handleOpenAddTaskModal}>Add Task</Button>
+      <div className="flex gap-2">
           <Select value={sortBy} onValueChange={(value: "deadline" | "createdAt") => setSortBy(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by" />
@@ -206,7 +236,7 @@ export default function TodoList() {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          {(['todo', 'In Progress', 'Done'] as const).map((status) => (
+          {(['Todo', 'In Progress', 'Done'] as const).map((status) => (
             <Droppable key={status} droppableId={status}>
               {(provided) => (
                 console.log(tasks),
@@ -261,117 +291,3 @@ export default function TodoList() {
   )
 }
 
-function TaskCard({ task }: { task: Task; onDelete: (id: string) => void }) {
-  return (
-    <Card className="mb-2">
-      <CardHeader>
-        <CardTitle>{task.title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p>{task.description}</p>
-        <p>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'Not set'}</p>
-        <p>Priority: {['Low', 'Medium', 'High'][task.priority - 1]}</p>
-        {/* <Button variant="destructive" onClick={() => onDelete(task.id)}>Delete</Button> */}
-      </CardContent>
-    </Card>
-  )
-}
-
-function TaskModal({ isOpen, onClose, onSubmit, initialTask, onDelete }: {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (task: Task | NewTask) => void
-  initialTask: Task | NewTask
-  onDelete?: (id: string) => void; // Added this line
-}) {
-  const [task, setTask] = useState(initialTask)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(task)
-    onClose()
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{('id' in initialTask) ? 'Edit Task' : 'Add New Task'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={task.title}
-              onChange={(e) => setTask({ ...task, title: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={task.description}
-              onChange={(e) => setTask({ ...task, description: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={('status' in task) ? task.status : 'Todo'}
-              onValueChange={(value) => setTask({ ...task, status: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todo">Todo</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="deadline">Deadline</Label>
-            <Input
-              id="deadline"
-              type="date"
-              value={task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : ''}
-              onChange={(e) => setTask({ ...task, deadline: new Date(e.target.value) })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="priority">Priority</Label>
-            <Select
-              value={task.priority.toString()}
-              onValueChange={(value) => setTask({ ...task, priority: parseInt(value) })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Low</SelectItem>
-                <SelectItem value="2">Medium</SelectItem>
-                <SelectItem value="3">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button type="submit">{'id' in initialTask ? 'Update Task' : 'Add Task'}</Button>
-          {/* Only show the delete button if it's an existing task */}
-          {'id' in task && onDelete && (
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onDelete(task.id); // Call onDelete only if it exists
-                onClose(); // Close the modal after deletion
-              }}
-            >
-              Delete
-            </Button>
-          )}
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
