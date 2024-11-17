@@ -26,6 +26,7 @@ export default function LandingPage() {
     useEffect(() => {
         console.log("Data do usuário:", data);
         if (data && token) {
+            
             setUserInformation(data);
         }
     }, [data, setUserInformation, token]);

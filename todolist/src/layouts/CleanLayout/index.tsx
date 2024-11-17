@@ -1,10 +1,12 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import Navbar from '@/layouts/Navbar'; // Adjust the import path as necessary
 
 
 export const CleanLayout: React.FC = () => {
     return (
         <div>
+            <Navbar />
             <main>
                 <Outlet /> {/* This is where nested routes will be rendered */}
             </main>
