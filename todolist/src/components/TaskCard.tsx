@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Calendar, Clock, AlertTriangle } from 'lucide-react'
+import { Trash2, Calendar, Clock } from 'lucide-react'
 
 type Task = {
   id: string;
