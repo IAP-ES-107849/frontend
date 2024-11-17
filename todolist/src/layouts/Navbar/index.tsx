@@ -37,19 +37,24 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed w-full z-10 transition-all duration-300 ease-linear 
-      }`}
+      className={`fixed w-full z-10 transition-all duration-300 ease-linear`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center transition-all duration-300 ease-linear pt-2">
-          <div className="flex-1 flex items-center justify-end">
+        <div className="flex justify-between items-center py-4">
+          {/* Greeting and Logout Section */}
+          <div className="flex-1 flex justify-end items-center">
             {token && (
-              <div className="flex items-center">
-                <div className="hidden md:block text-black mr-2 text-lg font-bold">
-                    
-                  Welcome {givenName} {familyName}
+              <div className="flex items-center space-x-6">
+                {/* Greeting Message */}
+                <div className="hidden md:block text-gray-800 text-lg font-bold">
+                  Welcome, {givenName} {familyName}
                 </div>
-                <Button onClick={handleLogout} variant="" className="mr-2 ml-6">
+                {/* Logout Button */}
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="px-4 py-2 border border-gray-300 text-gray-600 hover:bg-gray-100 transition-all duration-200"
+                >
                   Logout
                 </Button>
               </div>
@@ -59,4 +64,5 @@ export default function Navbar() {
       </div>
     </nav>
   );
+  
 }

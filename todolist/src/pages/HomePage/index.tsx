@@ -198,12 +198,29 @@ export default function TodoList() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Todo List</h1>
-      <div className="flex justify-between items-center mb-4">
-      <Button onClick={handleOpenAddTaskModal}>Add Task</Button>
-      <div className="flex gap-2">
-          <Select value={sortBy} onValueChange={(value: "deadline" | "createdAt") => setSortBy(value)}>
-            <SelectTrigger className="w-[180px]">
+      <h1 className="text-3xl font-extrabold mb-6 text-left text-blue-600">
+        <span className="inline-block bg-gradient-to-r from-blue-400 to-purple-600 text-transparent bg-clip-text">
+          Todo List
+        </span>
+      </h1>
+      <div className="flex justify-between items-center mb-6">
+        {/* Add Task Button */}
+        <Button
+          onClick={handleOpenAddTaskModal}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition-all"
+        >
+          Add Task
+        </Button>
+
+        {/* Sorting and Filtering Controls */}
+        <div className="flex gap-4">
+          {/* Sort By */}
+          <Select
+            value={sortBy}
+            onValueChange={(value: "deadline" | "createdAt") => setSortBy(value)}
+            className="w-[200px]"
+          >
+            <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -211,8 +228,14 @@ export default function TodoList() {
               <SelectItem value="createdAt">Created At</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
-            <SelectTrigger className="w-[180px]">
+
+          {/* Sort Order */}
+          <Select
+            value={sortOrder}
+            onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
+            className="w-[200px]"
+          >
+            <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
               <SelectValue placeholder="Sort order" />
             </SelectTrigger>
             <SelectContent>
@@ -220,8 +243,14 @@ export default function TodoList() {
               <SelectItem value="desc">Descending</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-[180px]">
+
+          {/* Priority Filter */}
+          <Select
+            value={priorityFilter}
+            onValueChange={setPriorityFilter}
+            className="w-[200px]"
+          >
+            <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
               <SelectValue placeholder="Filter by priority" />
             </SelectTrigger>
             <SelectContent>

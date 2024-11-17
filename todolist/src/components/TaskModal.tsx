@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, isBefore } from "date-fns";
 import { CalendarIcon, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -94,97 +94,110 @@ export function TaskModal({
     }
   };
 
+  const [deadlineError, setDeadlineError] = useState<string | null>(null);
+
+  // Inside the JSX
+  {deadlineError && <p className="text-red-500 text-sm">{deadlineError}</p>}
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] bg-white rounded-lg shadow-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
+          <DialogTitle className="text-2xl font-semibold text-gray-800">
             {('id' in initialTask) ? 'Edit Task' : 'Add New Task'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Title Input */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">Title</Label>
+            <Label htmlFor="title" className="text-sm font-medium text-gray-600">
+              Title
+            </Label>
             <Input
               id="title"
               value={task.title}
               onChange={(e) => setTask({ ...task, title: e.target.value })}
-              className="w-full"
+              className="w-full border-gray-300 shadow-sm"
               required
             />
           </div>
+
+          {/* Description Input */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+            <Label htmlFor="description" className="text-sm font-medium text-gray-600">
+              Description
+            </Label>
             <Textarea
               id="description"
               value={task.description}
               onChange={(e) => setTask({ ...task, description: e.target.value })}
-              className="w-full min-h-[100px]"
+              className="w-full border-gray-300 shadow-sm min-h-[100px]"
             />
           </div>
+
+          {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
+            {/* Status */}
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+              <Label htmlFor="status" className="text-sm font-medium text-gray-600">
+                Status
+              </Label>
               <Select
                 value={task.status}
                 onValueChange={(value) => setTask({ ...task, status: value })}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-gray-300 shadow-sm">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Todo">
-                    <div className="flex items-center">
-                      {getStatusIcon('Todo')}
-                      <span className="ml-2">Todo</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="In Progress">
-                    <div className="flex items-center">
-                      {getStatusIcon('In Progress')}
-                      <span className="ml-2">In Progress</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Done">
-                    <div className="flex items-center">
-                      {getStatusIcon('Done')}
-                      <span className="ml-2">Done</span>
-                    </div>
-                  </SelectItem>
+                  {['Todo', 'In Progress', 'Done'].map((status) => (
+                    <SelectItem value={status} key={status}>
+                      <div className="flex items-center">
+                        {getStatusIcon(status)}
+                        <span className="ml-2">{status}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Priority */}
             <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm font-medium">Priority</Label>
+              <Label htmlFor="priority" className="text-sm font-medium text-gray-600">
+                Priority
+              </Label>
               <Select
                 value={task.priority.toString()}
                 onValueChange={(value) => setTask({ ...task, priority: parseInt(value) })}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-gray-300 shadow-sm">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">
-                    <span className={cn("font-medium", getPriorityColor(1))}>Low</span>
-                  </SelectItem>
-                  <SelectItem value="2">
-                    <span className={cn("font-medium", getPriorityColor(2))}>Medium</span>
-                  </SelectItem>
-                  <SelectItem value="3">
-                    <span className={cn("font-medium", getPriorityColor(3))}>High</span>
-                  </SelectItem>
+                  {[1, 2, 3].map((priority) => (
+                    <SelectItem value={priority.toString()} key={priority}>
+                      <span className={cn("font-medium", getPriorityColor(priority))}>
+                        {priority === 1 ? "Low" : priority === 2 ? "Medium" : "High"}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {/* Deadline */}
           <div className="space-y-2">
-            <Label htmlFor="deadline" className="text-sm font-medium">Deadline</Label>
+            <Label htmlFor="deadline" className="text-sm font-medium text-gray-600">
+              Deadline
+            </Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal border-gray-300 shadow-sm",
                     !task.deadline && "text-muted-foreground"
                   )}
                 >
@@ -196,17 +209,28 @@ export function TaskModal({
                 <Calendar
                   mode="single"
                   selected={task.deadline || undefined}
-                  onSelect={(date) => setTask({ ...task, deadline: date || null })}
+                  onSelect={(date) => {
+                    if (date && isBefore(date, new Date())) {
+                      // Display an error message or handle the error
+                      setDeadlineError("Deadline must be a future date.");
+                    } else {
+                      setDeadlineError(null);
+                      setTask({ ...task, deadline: date || null });
+                    }
+                  }}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
           </div>
-          <DialogFooter className="sm:justify-between">
+
+          {/* Footer */}
+          <DialogFooter className="flex justify-between items-center space-x-4">
             {'id' in task && onDelete && (
               <Button
                 type="button"
                 variant="destructive"
+                className="text-white bg-red-500 hover:bg-red-600"
                 onClick={() => {
                   onDelete(task.id);
                   onClose();
@@ -215,12 +239,12 @@ export function TaskModal({
                 Delete
               </Button>
             )}
-            <div className="flex justify-end space-x-2">
+            <div className="flex space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit">
-                {'id' in initialTask ? 'Update Task' : 'Add Task'}
+              <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-600">
+                {('id' in initialTask) ? 'Update Task' : 'Add Task'}
               </Button>
             </div>
           </DialogFooter>
