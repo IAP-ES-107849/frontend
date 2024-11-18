@@ -5,13 +5,10 @@ const scheme = {
   HTTPS: "https://",
 };
 
-if (import.meta.env.PROD) {
-  HOST = "www.google.com";
-  BASE_URL = `${scheme.HTTPS}${HOST}`;
-} else {
-  HOST = "localhost";
-  BASE_URL = `${scheme.HTTP}${HOST}:8000`;
-}
+
+HOST = "alb-378575111.eu-north-1.elb.amazonaws.com:444";
+BASE_URL = `${scheme.HTTPS}${HOST}`;
+
 
 const config = {
   PRODUCTION: import.meta.env.PROD,
