@@ -78,7 +78,7 @@ export default function LandingPage() {
                                 variants={itemVariants}
                             >
                                 <Link to="
-                                    https://242201303055-iap-es.auth.eu-north-1.amazoncognito.com/login?client_id=3rcgpg4vr8es9g708rn01pusc&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone&redirect_uri=https%3A%2F%2Falb-378575111.eu-north-1.elb.amazonaws.com%2Foauth2%2Fidpresponse
+                                    https://242201303055-iap-es.auth.eu-north-1.amazoncognito.com/login?client_id=3rcgpg4vr8es9g708rn01pusc&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone&redirect_uri=https%3A%2F%2Falb-584283561.eu-north-1.elb.amazonaws.com%2Foauth2%2Fidpresponse
                                 ">
                                     <Button className="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold transition-colors duration-200 transform bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80">
                                         Get Started

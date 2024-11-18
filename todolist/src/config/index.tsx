@@ -6,7 +6,7 @@ const scheme = {
 };
 
 
-HOST = "alb-378575111.eu-north-1.elb.amazonaws.com:444";
+HOST = "alb-584283561.eu-north-1.elb.amazonaws.com:444";
 BASE_URL = `${scheme.HTTPS}${HOST}`;
 
 
