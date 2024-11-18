@@ -182,8 +182,10 @@ export default function TodoList() {
   };
 
   const sortedAndFilteredTasks = tasks
-    .filter(task => priorityFilter === 'all' || task.priority === priorityFilter)
-    .sort((a, b) => {
+    .filter(task => {
+      // Ensure correct filtering logic for priority
+      return priorityFilter === 'all' || task.priority === parseInt(priorityFilter, 10);
+    }).sort((a, b) => {
       const aDeadline = a.deadline ? new Date(a.deadline).getTime() : 0;
       const bDeadline = b.deadline ? new Date(b.deadline).getTime() : 0;
 
@@ -197,125 +199,122 @@ export default function TodoList() {
     });
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-extrabold mb-6 text-left text-blue-600">
-        <span className="inline-block bg-gradient-to-r from-blue-400 to-purple-600 text-transparent bg-clip-text">
-          Todo List
-        </span>
-      </h1>
-      <div className="flex justify-between items-center mb-6">
-        {/* Add Task Button */}
-        <Button
-          onClick={handleOpenAddTaskModal}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition-all"
-        >
-          Add Task
-        </Button>
-
-        {/* Sorting and Filtering Controls */}
-        <div className="flex gap-4">
-          {/* Sort By */}
-          <Select
-            value={sortBy}
-            onValueChange={(value: "deadline" | "createdAt") => setSortBy(value)}
-            className="w-[200px]"
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 flex flex-col justify-center items-center p-4">
+      <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          {/* Add Task Button */}
+          <Button
+            onClick={handleOpenAddTaskModal}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition-all"
           >
-            <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="deadline">Deadline</SelectItem>
-              <SelectItem value="createdAt">Created At</SelectItem>
-            </SelectContent>
-          </Select>
+            Add Task
+          </Button>
 
-          {/* Sort Order */}
-          <Select
-            value={sortOrder}
-            onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
-            className="w-[200px]"
-          >
-            <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
-              <SelectValue placeholder="Sort order" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asc">Ascending</SelectItem>
-              <SelectItem value="desc">Descending</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Sorting and Filtering Controls */}
+          <div className="flex gap-4">
+            {/* Sort By */}
+            <Select
+              value={sortBy}
+              onValueChange={(value: "deadline" | "createdAt") => setSortBy(value)}
+              className="w-[200px]"
+            >
+              <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="deadline">Deadline</SelectItem>
+                <SelectItem value="createdAt">Created At</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Priority Filter */}
-          <Select
-            value={priorityFilter}
-            onValueChange={setPriorityFilter}
-            className="w-[200px]"
-          >
-            <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
-              <SelectValue placeholder="Filter by priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="1">Low</SelectItem>
-              <SelectItem value="2">Medium</SelectItem>
-              <SelectItem value="3">High</SelectItem>
-            </SelectContent>
-          </Select>
+            {/* Sort Order */}
+            <Select
+              value={sortOrder}
+              onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
+              className="w-[200px]"
+            >
+              <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
+                <SelectValue placeholder="Sort order" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="asc">Ascending</SelectItem>
+                <SelectItem value="desc">Descending</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Priority Filter */}
+            <Select
+              value={priorityFilter}
+              onValueChange={setPriorityFilter}
+              className="w-[200px]"
+            >
+              <SelectTrigger className="border-gray-300 shadow-sm rounded-md">
+                <SelectValue placeholder="Filter by priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="1">Low</SelectItem>
+                <SelectItem value="2">Medium</SelectItem>
+                <SelectItem value="3">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          {(['Todo', 'In Progress', 'Done'] as const).map((status) => (
-            <Droppable key={status} droppableId={status}>
-              {(provided) => (
-                console.log(tasks),
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="bg-gray-100 p-4 rounded-lg"
-                >
-                  <h2 className="font-semibold mb-2">{status}</h2>
-                  {sortedAndFilteredTasks
-                    .filter(task => task.status === status)
-                    .map((task, index) => (
-                      <Draggable key={task.id.toString()} draggableId={task.id.toString()} index={index}>
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onClick={() => setSelectedTask(task)}
-                          >
-                            <TaskCard task={task} onDelete={deleteTask} />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-        </div>
-      </DragDropContext>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            {(['Todo', 'In Progress', 'Done'] as const).map((status) => (
+              <Droppable key={status} droppableId={status}>
+                {(provided) => (
+                  console.log(tasks),
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="bg-gray-100 p-4 rounded-lg"
+                  >
+                    <h2 className="font-semibold mb-2">{status}</h2>
+                    {sortedAndFilteredTasks
+                      .filter(task => task.status === status)
+                      .map((task, index) => (
+                        <Draggable key={task.id.toString()} draggableId={task.id.toString()} index={index}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => setSelectedTask(task)}
+                            >
+                              <TaskCard task={task} onDelete={deleteTask} />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
+        </DragDropContext>
 
-      <TaskModal
-        isOpen={isAddTaskModalOpen}
-        onClose={() => setIsAddTaskModalOpen(false)}
-        onSubmit={(task) => addTask(task as NewTask)}
-        initialTask={newTask}
-      />
-
-      {selectedTask && (
         <TaskModal
-          isOpen={true}
-          onClose={() => setSelectedTask(null)}
-          onSubmit={handleTaskSubmit}
-          initialTask={selectedTask}
-          onDelete={deleteTask} // Pass this as a prop
-
+          isOpen={isAddTaskModalOpen}
+          onClose={() => setIsAddTaskModalOpen(false)}
+          onSubmit={(task) => addTask(task as NewTask)}
+          initialTask={newTask}
         />
-      )}
+
+        {selectedTask && (
+          <TaskModal
+            isOpen={true}
+            onClose={() => setSelectedTask(null)}
+            onSubmit={handleTaskSubmit}
+            initialTask={selectedTask}
+            onDelete={deleteTask} // Pass this as a prop
+
+          />
+        )}
+      </div>
     </div>
   )
 }

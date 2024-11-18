@@ -36,33 +36,50 @@ export default function Navbar() {
   };
 
   return (
-    <nav
-      className={`fixed w-full z-10 transition-all duration-300 ease-linear`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Greeting and Logout Section */}
-          <div className="flex-1 flex justify-end items-center">
-            {token && (
-              <div className="flex items-center space-x-6">
-                {/* Greeting Message */}
-                <div className="hidden md:block text-gray-800 text-lg font-bold">
-                  Welcome, {givenName} {familyName}
-                </div>
-                {/* Logout Button */}
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  className="px-4 py-2 border border-gray-300 text-gray-600 hover:bg-gray-100 transition-all duration-200"
-                >
-                  Logout
-                </Button>
-              </div>
-            )}
+    <>
+      {/* Navbar */}
+      <nav
+        className="fixed w-full z-10 bg-white shadow-sm transition-all duration-300 ease-linear"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            {/* Left Section: Title */}
+            <div>
+              <h1 className="text-3xl font-extrabold text-blue-600">
+                <span className="inline-block bg-gradient-to-r from-blue-400 to-purple-600 text-transparent bg-clip-text">
+                  Todo List
+                </span>
+              </h1>
+            </div>
+  
+            {/* Right Section: Greeting and Logout */}
+            <div className="flex items-center space-x-6">
+              {token && (
+                <>
+                  {/* Greeting Message */}
+                  <div className="hidden md:block text-gray-800 text-lg font-bold">
+                    Welcome, {givenName} {familyName}
+                  </div>
+  
+                  {/* Logout Button */}
+                  <Button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition-all"
+                  >
+                    Logout
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
+      </nav>
+  
+      {/* Page Content */}
+      <div className="pt-16">
       </div>
-    </nav>
+    </>
   );
+  
   
 }

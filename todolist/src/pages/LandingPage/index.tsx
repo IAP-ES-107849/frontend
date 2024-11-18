@@ -83,9 +83,7 @@ export default function LandingPage() {
                                         <ArrowRight className="ml-2 h-5 w-5" />
                                     </Button>
                                 </Link>
-                                <Button variant="outline" className="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-blue-600 transition-colors duration-200 transform bg-transparent border border-blue-600 rounded-full hover:bg-blue-100 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80">
-                                    Learn More
-                                </Button>
+                                
                             </motion.div>
                             <motion.div 
                                 className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12"
@@ -102,8 +100,8 @@ export default function LandingPage() {
                                     <div className="p-3 bg-green-100 rounded-full">
                                         <List className="h-8 w-8 text-green-600" />
                                     </div>
-                                    <h3 className="text-xl font-semibold">Organize with Categories</h3>
-                                    <p className="text-center text-gray-500 dark:text-gray-400">Group your tasks into categories for better organization.</p>
+                                    <h3 className="text-xl font-semibold">Organize your tasks</h3>
+                                    <p className="text-center text-gray-500 dark:text-gray-400">Group your tasks for better organization.</p>
                                 </motion.div>
                                 <motion.div className="flex flex-col items-center space-y-2" variants={itemVariants}>
                                     <div className="p-3 bg-purple-100 rounded-full">
@@ -118,7 +116,7 @@ export default function LandingPage() {
                 </section>
             </motion.main>
             <footer className="w-full max-w-6xl py-6 text-center text-gray-500 dark:text-gray-400">
-                <p>&copy; 2023 TODO LIST. All rights reserved.</p>
+                <p>&copy; 2024 TODO LIST by Cotorobai. All rights reserved.</p>
             </footer>
         </div>
     )
