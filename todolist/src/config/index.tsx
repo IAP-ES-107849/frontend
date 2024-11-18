@@ -14,7 +14,7 @@ const config = {
   PRODUCTION: import.meta.env.PROD,
   HOST,
   BASE_URL,
-  API_USER_URL: `${BASE_URL}/auth`,
+  API_URL: `${BASE_URL}/api`,
 };
 
 export default config;

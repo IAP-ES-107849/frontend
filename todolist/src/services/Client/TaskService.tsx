@@ -1,11 +1,11 @@
 import config from "@/config";
 import { createClient } from "./client";
 
-const client = createClient(config.BASE_URL);
+const client = createClient(config.API_URL);
 
 const TaskService = {
     async getTasks() {
-        return client.get("/api/tasks");
+        return client.get("/tasks");
     },
     async createTask(
         title: string,
@@ -14,7 +14,7 @@ const TaskService = {
         deadline: string,
         user_id: string
     ) {
-        return client.post("/api/tasks",
+        return client.post("/tasks",
             { title, description, priority, deadline, user_id }
         );
     },
@@ -28,7 +28,7 @@ const TaskService = {
         created_at: string,
       ) {
         console.log("updateTask",priority);
-        return client.put(`/api/tasks/${id}`, {
+        return client.put(`/tasks/${id}`, {
           title,
           description,
           status,
@@ -38,7 +38,7 @@ const TaskService = {
         });
       },
     async deleteTask(id: string) {
-        return client.delete(`/api/tasks/${id}`);
+        return client.delete(`/tasks/${id}`);
     },
 };
 
